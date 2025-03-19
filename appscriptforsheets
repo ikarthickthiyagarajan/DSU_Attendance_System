@@ -1,0 +1,41 @@
+function doGet() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Attendance list");
+  var data = sheet.getDataRange().getValues(); // Raw values
+  var displayData = sheet.getDataRange().getDisplayValues(); // Displayed values
+  var jsonData = { "data": [] };
+
+  var headers = data[0]; // First row as headers
+  var nameIndex = headers.indexOf("Name");
+  var dateIndex = headers.indexOf("Date");
+  var timeIndex = headers.indexOf("Time");
+
+  if (nameIndex === -1 || dateIndex === -1 || timeIndex === -1) {
+    var errorMsg = JSON.stringify({ error: "Required columns not found" });
+    Logger.log(errorMsg);
+    return ContentService.createTextOutput(errorMsg).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][nameIndex]) {  // Ignore empty rows
+      var formattedDate = displayData[i][dateIndex]; // Read from displayed values
+      var formattedTime = displayData[i][timeIndex]; // Read from displayed values
+
+      var row = {
+        "Name": data[i][nameIndex],
+        "Date": formattedDate || "", // Avoid null values
+        "Time": formattedTime || ""
+      };
+
+      jsonData["data"].push(row);
+    }
+  }
+
+  var finalOutput = JSON.stringify(jsonData, null, 2);
+  
+  // ✅ Show in Script Editor's Execution Log
+  Logger.log(finalOutput);
+  console.log(finalOutput);
+
+  // ✅ Show in Web Response
+  return ContentService.createTextOutput(finalOutput).setMimeType(ContentService.MimeType.JSON);
+}
